@@ -7,6 +7,7 @@ var bcrypt = require('bcrypt');
 var userModel = require('../models/users')
 
 
+
 router.post('/sign-up', async function(req,res,next){
 
   var error = []
@@ -38,11 +39,11 @@ router.post('/sign-up', async function(req,res,next){
       email: req.body.emailFromFront,
       password: hash,
       token: uid2(32),
+      wishes: [],
     })
   
     saveUser = await newUser.save()
-  
-    
+       
     if(saveUser){
       result = true
       token = saveUser.token
@@ -90,6 +91,37 @@ router.post('/sign-in', async function(req,res,next){
   res.json({result, user, error, token})
 
 
+})
+
+router.post('/addWishes', async function(req,res,next){
+
+var shortToken = req.body.tokenFromFront
+var wishesUser = await userModel.findOne({token : shortToken}) 
+
+var wishes = {source: req.body.source, title : req.body.title, image: req.body.image ,content: req.body.content}
+wishesUser.wishes.push(wishes)
+var UpdateWishes = wishesUser.save()
+
+  res.json({UpdateWishes})
+
+})
+
+router.delete('/deleteWishes', async function(req,res,next){
+  var shortToken = req.body.tokenFromFront
+  var wishesUser = await userModel.findOne({token : shortToken})
+  var wishesList = wishesUser.wishes.findIndex((element) => element.title == req.body.title)
+ 
+    wishesUser.wishes.splice(wishesList,1);
+  
+  var wishesUserSave = wishesUser.save()
+  res.json(wishesUserSave)
+})
+
+router.get('/getWishes/:token', async function(req,res,next){
+  var shortToken = req.params.token
+  var wishesUser = await userModel.findOne({token : shortToken})
+  var wishes = wishesUser.wishes
+  res.json(wishes)
 })
 
 module.exports = router;
